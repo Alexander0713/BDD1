@@ -1,10 +1,9 @@
 name: Java CI with Gradle
 
-on: [ push, pull_request ]
+on: [push, pull_request]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -16,16 +15,12 @@ jobs:
           distribution: 'adopt'
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
-      - name: Start SUT
-        # Запускаем SUT,
-        # имя файла SUT будет отличаться в каждой задаче.
-        # & означает, что в фоновом режиме не блокируем терминал для запуска тестов,
-        # обязательно должен быть для запуска SUT в CI
-        run: java -jar artifacts/app-ibank-build-for-testers.jar &
-      - name: Wait for app to start
-        run: sleep 10
-      - name: Build with Gradle
-        # Запускаем автотесты
-        # Для проектов на базе Selenide необходимо добавить параметр для запуска браузера
-        # в headless режиме -Dselenide.headless=true, параметр --info должен остаться
-        run: ./gradlew test --info -Dselenide.headless=true
+
+      - name: Start app and run tests
+        run: |
+          # Запускаем приложение в фоновом режиме
+          java -jar artifacts/app-ibank-build-for-testers.jar &
+          # Ждем запуска
+          sleep 20
+          # Запускаем тесты
+          ./gradlew test --info -Dselenide.headless=true
