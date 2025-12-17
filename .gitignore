@@ -39,4 +39,4 @@ out/
 *.zip
 *.tar.gz
 *.rar
-!artifacts/app-ibank-build-for-testers.jar
+
