@@ -1,0 +1,3 @@
+[![Java CI with Gradle](https://github.com/Alexander0713/BDD1/actions/workflows/gradle.yml/badge.svg)](https://github.com/Alexander0713/BDD1/actions/workflows/gradle.yml)
+
+Два теста падают.
