@@ -3,6 +3,7 @@ package ru.netology.web.page;
 import com.codeborne.selenide.SelenideElement;
 import ru.netology.web.data.DataHelper;
 
+import static com.codeborne.selenide.Condition.text;
 import static com.codeborne.selenide.Condition.visible;
 import static com.codeborne.selenide.Selenide.$;
 
@@ -17,15 +18,31 @@ public class VerificationPage {
     }
 
     public DashboardPage validVerify(DataHelper.VerificationCode verificationCode) {
-        codeField.setValue(verificationCode.getCode());
+        enterVerificationCode(verificationCode);
         verifyButton.click();
         return new DashboardPage();
     }
 
-    public void invalidVerify(DataHelper.VerificationCode verificationCode) {
-        codeField.setValue(verificationCode.getCode());
+    public void invalidVerify(DataHelper.VerificationCode verificationCode, String expectedErrorText) {
+        enterVerificationCode(verificationCode);
         verifyButton.click();
+        assertErrorNotificationWithText(expectedErrorText);
+    }
+
+    public void assertErrorNotificationVisible() {
         errorNotification.shouldBe(visible);
     }
-}
 
+    public void assertErrorNotificationWithText(String expectedText) {
+        errorNotification.shouldBe(visible)
+                .shouldHave(text(expectedText));
+    }
+
+    public String getErrorNotificationText() {
+        return errorNotification.text();
+    }
+
+    private void enterVerificationCode(DataHelper.VerificationCode verificationCode) {
+        codeField.setValue(verificationCode.getCode());
+    }
+}

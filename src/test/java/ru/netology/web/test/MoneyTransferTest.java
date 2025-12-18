@@ -1,6 +1,5 @@
 package ru.netology.web.test;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.netology.web.data.DataHelper;
@@ -18,9 +17,6 @@ class MoneyTransferTest {
     DataHelper.Card firstCard;
     DataHelper.Card secondCard;
 
-    private int initialFirstCardBalance;
-    private int initialSecondCardBalance;
-
     @BeforeEach
     void setup() {
         open("http://localhost:9999");
@@ -32,59 +28,6 @@ class MoneyTransferTest {
 
         firstCard = DataHelper.getFirstCard();
         secondCard = DataHelper.getSecondCard();
-
-        initialFirstCardBalance = dashboardPage.getCardBalance(firstCard);
-        initialSecondCardBalance = dashboardPage.getCardBalance(secondCard);
-    }
-
-    @AfterEach
-    void tearDown() {
-
-        restoreInitialBalances();
-    }
-
-    private void restoreInitialBalances() {
-        int currentFirstBalance = dashboardPage.getCardBalance(firstCard);
-        int currentSecondBalance = dashboardPage.getCardBalance(secondCard);
-
-
-        if (currentFirstBalance != initialFirstCardBalance ||
-                currentSecondBalance != initialSecondCardBalance) {
-
-
-            if (currentFirstBalance != initialFirstCardBalance) {
-                int difference = initialFirstCardBalance - currentFirstBalance;
-                if (difference != 0) {
-
-                    if (difference > 0) {
-
-                        TransferPage transferPage = dashboardPage.selectCardToTransfer(firstCard);
-                        dashboardPage = transferPage.makeTransfer(secondCard, difference);
-                    } else {
-
-                        TransferPage transferPage = dashboardPage.selectCardToTransfer(secondCard);
-                        dashboardPage = transferPage.makeTransfer(firstCard, Math.abs(difference));
-                    }
-                }
-            }
-
-
-            currentFirstBalance = dashboardPage.getCardBalance(firstCard);
-            currentSecondBalance = dashboardPage.getCardBalance(secondCard);
-
-            if (currentSecondBalance != initialSecondCardBalance) {
-                int difference = initialSecondCardBalance - currentSecondBalance;
-                if (difference != 0) {
-                    if (difference > 0) {
-                        TransferPage transferPage = dashboardPage.selectCardToTransfer(secondCard);
-                        dashboardPage = transferPage.makeTransfer(firstCard, difference);
-                    } else {
-                        TransferPage transferPage = dashboardPage.selectCardToTransfer(firstCard);
-                        dashboardPage = transferPage.makeTransfer(secondCard, Math.abs(difference));
-                    }
-                }
-            }
-        }
     }
 
     @Test
@@ -142,7 +85,6 @@ class MoneyTransferTest {
         var transferPage = dashboardPage.selectCardToTransfer(secondCard);
         transferPage.makeInvalidTransfer(firstCard, balance + 1000);
 
-
         dashboardPage = new DashboardPage();
         assertEquals(balance, dashboardPage.getCardBalance(firstCard));
     }
@@ -152,17 +94,18 @@ class MoneyTransferTest {
         var firstCardBalance = dashboardPage.getCardBalance(firstCard);
         var secondCardBalance = dashboardPage.getCardBalance(secondCard);
 
+        // Всегда переводим с первой карты, но только если на ней есть деньги
+        // Используем Math.max чтобы убедиться что amount >= 1
+        var amount = Math.max(1, firstCardBalance);
 
-        if (firstCardBalance > 0) {
-            TransferPage transferPage = dashboardPage.selectCardToTransfer(secondCard);
-            dashboardPage = transferPage.makeTransfer(firstCard, firstCardBalance);
+        TransferPage transferPage = dashboardPage.selectCardToTransfer(secondCard);
+        dashboardPage = transferPage.makeTransfer(firstCard, amount);
 
-            var newFirstCardBalance = dashboardPage.getCardBalance(firstCard);
-            var newSecondCardBalance = dashboardPage.getCardBalance(secondCard);
+        var newFirstCardBalance = dashboardPage.getCardBalance(firstCard);
+        var newSecondCardBalance = dashboardPage.getCardBalance(secondCard);
 
-            assertEquals(0, newFirstCardBalance);
-            assertEquals(secondCardBalance + firstCardBalance, newSecondCardBalance);
-        }
+        assertEquals(firstCardBalance - amount, newFirstCardBalance);
+        assertEquals(secondCardBalance + amount, newSecondCardBalance);
     }
 
     @Test
@@ -170,20 +113,16 @@ class MoneyTransferTest {
         var firstCardBalance = dashboardPage.getCardBalance(firstCard);
         var secondCardBalance = dashboardPage.getCardBalance(secondCard);
 
+        // Всегда переводим 1 рубль с первой карты на вторую
+        var amount = 1;
 
-        if (firstCardBalance >= 1) {
-            TransferPage transferPage = dashboardPage.selectCardToTransfer(secondCard);
-            dashboardPage = transferPage.makeTransfer(firstCard, 1);
+        TransferPage transferPage = dashboardPage.selectCardToTransfer(secondCard);
+        dashboardPage = transferPage.makeTransfer(firstCard, amount);
 
-            assertEquals(firstCardBalance - 1, dashboardPage.getCardBalance(firstCard));
-            assertEquals(secondCardBalance + 1, dashboardPage.getCardBalance(secondCard));
-        } else if (secondCardBalance >= 1) {
-            TransferPage transferPage = dashboardPage.selectCardToTransfer(firstCard);
-            dashboardPage = transferPage.makeTransfer(secondCard, 1);
-
-            assertEquals(firstCardBalance + 1, dashboardPage.getCardBalance(firstCard));
-            assertEquals(secondCardBalance - 1, dashboardPage.getCardBalance(secondCard));
-        }
+        // Проверяем, что баланс изменился корректно
+        // (если денег не было, тест упадет, что и покажет проблему)
+        assertEquals(firstCardBalance - amount, dashboardPage.getCardBalance(firstCard));
+        assertEquals(secondCardBalance + amount, dashboardPage.getCardBalance(secondCard));
     }
 
     @Test
@@ -191,25 +130,14 @@ class MoneyTransferTest {
         var firstCardBalance = dashboardPage.getCardBalance(firstCard);
         var secondCardBalance = dashboardPage.getCardBalance(secondCard);
 
+        // Всегда пытаемся отменить перевод со второй карты на первую
+        TransferPage transferPage = dashboardPage.selectCardToTransfer(firstCard);
+        dashboardPage = transferPage.cancel();
 
-        if (firstCardBalance > 0) {
-            TransferPage transferPage = dashboardPage.selectCardToTransfer(secondCard);
-            dashboardPage = transferPage.cancel();
+        var newFirstCardBalance = dashboardPage.getCardBalance(firstCard);
+        var newSecondCardBalance = dashboardPage.getCardBalance(secondCard);
 
-            var newFirstCardBalance = dashboardPage.getCardBalance(firstCard);
-            var newSecondCardBalance = dashboardPage.getCardBalance(secondCard);
-
-            assertEquals(firstCardBalance, newFirstCardBalance);
-            assertEquals(secondCardBalance, newSecondCardBalance);
-        } else if (secondCardBalance > 0) {
-            TransferPage transferPage = dashboardPage.selectCardToTransfer(firstCard);
-            dashboardPage = transferPage.cancel();
-
-            var newFirstCardBalance = dashboardPage.getCardBalance(firstCard);
-            var newSecondCardBalance = dashboardPage.getCardBalance(secondCard);
-
-            assertEquals(firstCardBalance, newFirstCardBalance);
-            assertEquals(secondCardBalance, newSecondCardBalance);
-        }
+        assertEquals(firstCardBalance, newFirstCardBalance);
+        assertEquals(secondCardBalance, newSecondCardBalance);
     }
 }
