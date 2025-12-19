@@ -23,23 +23,9 @@ public class VerificationPage {
         return new DashboardPage();
     }
 
-    public void invalidVerify(DataHelper.VerificationCode verificationCode, String expectedErrorText) {
-        enterVerificationCode(verificationCode);
-        verifyButton.click();
-        assertErrorNotificationWithText(expectedErrorText);
-    }
-
-    public void assertErrorNotificationVisible() {
-        errorNotification.shouldBe(visible);
-    }
-
     public void assertErrorNotificationWithText(String expectedText) {
         errorNotification.shouldBe(visible)
                 .shouldHave(text(expectedText));
-    }
-
-    public String getErrorNotificationText() {
-        return errorNotification.text();
     }
 
     private void enterVerificationCode(DataHelper.VerificationCode verificationCode) {

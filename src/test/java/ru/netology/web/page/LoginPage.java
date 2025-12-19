@@ -24,40 +24,18 @@ public class LoginPage {
     }
 
     public VerificationPage validLogin(DataHelper.AuthInfo authInfo) {
-        return loginWithCredentials(authInfo, true);
+        loginWithCredentials(authInfo);
+        return new VerificationPage();
     }
 
-    public void invalidLogin(DataHelper.AuthInfo authInfo) {
-        loginWithCredentials(authInfo, false);
-        errorNotification.shouldBe(Condition.visible);
-    }
-
-    public void invalidLoginWithMessage(DataHelper.AuthInfo authInfo, String expectedMessage) {
-        loginWithCredentials(authInfo, false);
-        assertErrorNotificationWithText(expectedMessage);
-    }
-    public void loginWithError(DataHelper.AuthInfo authInfo, String expectedError) {
-        loginWithCredentials(authInfo, false);
-        assertErrorNotificationWithText(expectedError);
-    }
-
-    private VerificationPage loginWithCredentials(DataHelper.AuthInfo authInfo, boolean expectSuccess) {
+    private void loginWithCredentials(DataHelper.AuthInfo authInfo) {
         fillAuthForm(authInfo);
         loginButton.click();
-        return expectSuccess ? new VerificationPage() : null;
-    }
-
-    public void assertErrorNotificationVisible() {
-        errorNotification.shouldBe(visible);
     }
 
     public void assertErrorNotificationWithText(String expectedText) {
         errorNotification.shouldBe(visible)
                 .shouldHave(Condition.text(expectedText));
-    }
-
-    public String getErrorNotificationText() {
-        return errorNotification.text();
     }
 
     private void fillAuthForm(DataHelper.AuthInfo authInfo) {

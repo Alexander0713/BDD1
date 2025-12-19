@@ -80,13 +80,19 @@ class MoneyTransferTest {
 
     @Test
     void shouldNotTransferMoreThanBalance() {
-        var balance = dashboardPage.getCardBalance(firstCard);
+        var firstCardBalance = dashboardPage.getCardBalance(firstCard);
+        var secondCardBalance = dashboardPage.getCardBalance(secondCard);
 
         var transferPage = dashboardPage.selectCardToTransfer(secondCard);
-        transferPage.makeInvalidTransfer(firstCard, balance + 1000);
+        transferPage.makeInvalidTransfer(firstCard, firstCardBalance + 1000);
 
         dashboardPage = new DashboardPage();
-        assertEquals(balance, dashboardPage.getCardBalance(firstCard));
+
+        var newFirstCardBalance = dashboardPage.getCardBalance(firstCard);
+        var newSecondCardBalance = dashboardPage.getCardBalance(secondCard);
+
+        assertEquals(firstCardBalance, newFirstCardBalance);
+        assertEquals(secondCardBalance, newSecondCardBalance);
     }
 
     @Test
@@ -94,8 +100,6 @@ class MoneyTransferTest {
         var firstCardBalance = dashboardPage.getCardBalance(firstCard);
         var secondCardBalance = dashboardPage.getCardBalance(secondCard);
 
-        // Всегда переводим с первой карты, но только если на ней есть деньги
-        // Используем Math.max чтобы убедиться что amount >= 1
         var amount = Math.max(1, firstCardBalance);
 
         TransferPage transferPage = dashboardPage.selectCardToTransfer(secondCard);
@@ -113,14 +117,11 @@ class MoneyTransferTest {
         var firstCardBalance = dashboardPage.getCardBalance(firstCard);
         var secondCardBalance = dashboardPage.getCardBalance(secondCard);
 
-        // Всегда переводим 1 рубль с первой карты на вторую
         var amount = 1;
 
         TransferPage transferPage = dashboardPage.selectCardToTransfer(secondCard);
         dashboardPage = transferPage.makeTransfer(firstCard, amount);
 
-        // Проверяем, что баланс изменился корректно
-        // (если денег не было, тест упадет, что и покажет проблему)
         assertEquals(firstCardBalance - amount, dashboardPage.getCardBalance(firstCard));
         assertEquals(secondCardBalance + amount, dashboardPage.getCardBalance(secondCard));
     }
@@ -130,7 +131,6 @@ class MoneyTransferTest {
         var firstCardBalance = dashboardPage.getCardBalance(firstCard);
         var secondCardBalance = dashboardPage.getCardBalance(secondCard);
 
-        // Всегда пытаемся отменить перевод со второй карты на первую
         TransferPage transferPage = dashboardPage.selectCardToTransfer(firstCard);
         dashboardPage = transferPage.cancel();
 
